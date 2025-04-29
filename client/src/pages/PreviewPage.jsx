@@ -3,19 +3,17 @@ import { useUpload } from "../context/UploadContext";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
-import { Loader, Trash2 } from "lucide-react";
-
+import { Crop, Loader, Trash2 } from "lucide-react";
+import { Cropper } from "react-cropper";
+import "cropperjs/dist/cropper.css";
 
 const PreviewPage = () => {
   const { images, setImages } = useUpload();
   const queryClient = useQueryClient();
 
-  if (images.length === 0)
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        No Images Selected
-      </div>
-    );
+  const cropperRef = useRef(null);
+  const [currentCropIndex, setCurrentCropIndex] = useState(null);
+  const [cropImageSrc, setCropImageSrc] = useState(null);
 
   const [formData, setFormData] = useState(
     images.map(() => ({
@@ -30,6 +28,7 @@ const PreviewPage = () => {
     }))
   );
 
+  // Call API
   const { mutate: classificationMutate, isLoading } = useMutation({
     mutationFn: (classificationData) =>
       axiosInstance.post("/upload", classificationData, {
@@ -46,12 +45,80 @@ const PreviewPage = () => {
     },
   });
 
+  // Crop Function
+  const startCropping = async (index) => {
+    try {
+      const image = images[index];
+      if (!image?.preview) {
+        toast.error("No image available for cropping");
+        return;
+      }
+
+      // ใช้ preview ที่เป็น Data URL โดยตรง
+      setCropImageSrc(image.preview);
+      setCurrentCropIndex(index);
+    } catch (error) {
+      console.error("Error starting crop:", error);
+      toast.error("Failed to start cropping");
+    }
+  };
+
+  // submit Crop
+  const applyCropping = async () => {
+    if (currentCropIndex === null) return;
+
+    try {
+      const cropper = cropperRef.current?.cropper;
+      if (!cropper) {
+        toast.error("Cropper not initialized");
+        return;
+      }
+
+      // ได้รูปที่ถูก crop เป็น Data URL
+      const croppedCanvas = cropper.getCroppedCanvas({
+        width: 300,
+        height: 300,
+        fillColor: "#fff",
+      });
+
+      // เพิ่มการตรวจสอบว่าได้ canvas มาแล้ว
+      if (!croppedCanvas) {
+        toast.error("Failed to get cropped canvas. Please try cropping again.");
+        return;
+      }
+
+      const croppedBase64 = croppedCanvas.toDataURL();
+
+      const res = await fetch(croppedBase64);
+      const blob = await res.blob();
+      const file = new File([blob], `cropped-${Date.now()}.png`, {
+        type: "image/png",
+      });
+
+      const updatedImages = [...images];
+      updatedImages[currentCropIndex] = {
+        ...updatedImages[currentCropIndex],
+        preview: croppedBase64,
+        file: file,
+      };
+
+      setImages(updatedImages);
+      setCurrentCropIndex(null);
+      toast.success("Image cropped successfully");
+    } catch (error) {
+      console.error("Error applying crop:", error);
+      toast.error("Failed to crop image");
+    }
+  };
+
+  // when Change
   const handleChange = (index, field, value) => {
     const updatedFormData = [...formData];
     updatedFormData[index][field] = value;
     setFormData(updatedFormData);
   };
 
+  // when sucmit
   const handleSubmitHITL = async (e, index) => {
     e.preventDefault();
 
@@ -82,165 +149,235 @@ const PreviewPage = () => {
         console.log(key, value);
       }
     }
-    classificationMutate(payLoad);
+    classificationMutate(payLoad, {
+      onSuccess: () => {
+        toast.success("Send data completed");
+        queryClient.invalidateQueries({ queryKey: ["authUser"] });
+
+        // ลบภาพและฟอร์มที่ index นี้
+        setImages((prev) => prev.filter((_, i) => i !== index));
+        setFormData((prev) => prev.filter((_, i) => i !== index));
+      },
+    });
   };
 
+  // When click delete
   const handleDeleteForm = (index) => {
+    if (currentCropIndex === index) {
+      setCurrentCropIndex(null);
+      setCropImageSrc(null);
+    }
+
     setImages(images.filter((_, i) => i !== index));
+    setFormData(formData.filter((_, i) => i !== index));
   };
 
+  // redirect
   useEffect(() => {
     console.log("Current image file:", images);
   }, [images]);
+
   return (
-    <div className="lg:max-w-[1280px] px-4 w-full mx-auto min-h-[40rem] mb-20 flex flex-col">
-      <div className="text-center my-8 mt-10">
-        <h1 className="text-3xl">Human In The Loop (HITL)</h1>
-      </div>
-
-      {images.map((item, index) => (
-        <div
-          key={index}
-          className="w-full lg:max-w-4xl mx-auto px-8 py-12 mt-6 rounded-xl shadow-[0px_0px_30px_-20px_rgba(0,_0,_0,_0.8)] "
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 w-full">
-            <div className="flex items-center justify-center mb-10 lg:mb-0">
-              <img
-                src={item.preview}
-                key={index}
-                alt={`preview-${index}`}
-                className="w-[200px] h-auto"
-              />
-            </div>
-
-            <form
-              onSubmit={(e) => handleSubmitHITL(e, index)}
-              className="w-full flex flex-col gap-4 justify-center"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <select
-                  value={formData[index].typeOfLeaf}
-                  onChange={(e) =>
-                    handleChange(index, "typeOfLeaf", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
-                >
-                  <option value="">-- ชนิดของใบ --</option>
-                  <option value="ใบเลี้ยงเดี่ยว">ใบเลี้ยงเดี่ยว</option>
-                  <option value="ใบเลี้ยงคู่">ใบเลี้ยงคู่</option>
-                </select>
-
-                <select
-                  value={formData[index].thorn}
-                  onChange={(e) => handleChange(index, "thorn", e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
-                >
-                  <option value="">-- หนามบริเวณลำต้น --</option>
-                  <option value="มีหนาม">มีหนาม</option>
-                  <option value="ไม่มีหนาม">ไม่มีหนาม</option>
-                </select>
-
-                <select
-                  value={formData[index].trichomes}
-                  onChange={(e) =>
-                    handleChange(index, "trichomes", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
-                >
-                  <option value="">-- ขนบริเวณลำต้น --</option>
-                  <option value="มีขน">มีขน</option>
-                  <option value="ไม่มีขน">ไม่มีขน</option>
-                </select>
-
-                <select
-                  value={formData[index].tip}
-                  onChange={(e) => handleChange(index, "tip", e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
-                >
-                  <option value="">-- ครีบส่วนก้านใบ --</option>
-                  <option value="มีครีบ">มีครีบ</option>
-                  <option value="ไม่มีครีบ">ไม่มีครีบ</option>
-                </select>
-
-                <select
-                  value={formData[index].leafBaseColor}
-                  onChange={(e) =>
-                    handleChange(index, "leafBaseColor", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
-                >
-                  <option value="">-- สีโคนใบ --</option>
-                  <option value="สีเขียว">สีเขียว</option>
-                  <option value="สีม่วง">สีม่วง</option>
-                </select>
-
-                <select
-                  value={formData[index].leafMiddleColor}
-                  onChange={(e) =>
-                    handleChange(index, "leafMiddleColor", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
-                >
-                  <option value="">-- สีเส้นกลางใบ --</option>
-                  <option value="สีเขียว">สีเขียว</option>
-                  <option value="สีม่วง">สีม่วง</option>
-                </select>
-
-                <select
-                  value={formData[index].fruit}
-                  onChange={(e) => handleChange(index, "fruit", e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
-                >
-                  <option value="">-- ผลของพืช --</option>
-                  <option value="มีผล">มีผล</option>
-                  <option value="ไม่มีผล">ไม่มีผล</option>
-                </select>
-
-                <select
-                  value={formData[index].shapeOfPetiole}
-                  onChange={(e) =>
-                    handleChange(index, "shapeOfPetiole", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
-                >
-                  <option value="">-- ลักษณะของก้านใบ --</option>
-                  <option value="ก้านตรง">ก้านตรง</option>
-                  <option value="ก้านบิดเกลียว">ก้านบิดเกลียว</option>
-                </select>
-              </div>
-
-              <div className="w-full h-full flex  justify-center items-center gap-4">
-                <button
-                  type="submit"
-                  className={`inline-block py-3 w-full rounded-full text-white font-medium text-md cursor-pointer transition-all duration-300 ${
-                    isLoading
-                      ? "bg-blue-400 cursor-not-allowed"
-                      : "bg-blue-500 hover:bg-blue-600 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                  }`}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <Loader className="size-5 animate-spin duration-200 mr-2" />
-                      <span>Processing...</span>
-                    </div>
-                  ) : (
-                    "Submit"
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteForm(index)}
-                  className="text-white bg-red-500 p-3 rounded-full cursor-pointer hover:bg-red-600 duration-200 transform hover:-translate-y-0.5 active:bg-red-800"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </form>
-          </div>
+    <>
+      {images.length === 0 ? (
+        <div className="flex items-center justify-center min-h-160">
+          No Images Selected
         </div>
-      ))}
-    </div>
+      ) : (
+        <div className="lg:max-w-[1280px] px-4 w-full mx-auto min-h-[40rem] mb-20 flex flex-col">
+          <div className="text-center my-8 mt-10">
+            <h1 className="text-3xl">Human In The Loop (HITL)</h1>
+          </div>
+
+          {images.map((item, index) => (
+            <div
+              key={index}
+              className="w-full lg:max-w-4xl mx-auto px-8 py-12 mt-6 rounded-xl shadow-[0px_0px_30px_-20px_rgba(0,_0,_0,_0.8)] "
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 w-full">
+                <div className="flex flex-col items-center justify-center mb-10 md:mb-0 gap-4">
+                  <img
+                    src={item.preview}
+                    alt={`preview-${index}`}
+                    className="w-[200px] h-auto"
+                  />
+                  <button
+                    onClick={() => startCropping(index)}
+                    className="text-blue-500 flex items-center cursor-pointer px-3 py-2 rounded-xl shadow-xl"
+                  >
+                    <Crop className="w-4 h-4 mr-1" /> ตัดรูป & Padding
+                  </button>
+                </div>
+                <div className="flex flex-col gap-2 justify-center items-center">
+                  {currentCropIndex === index && (
+                    <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-70 flex items-center justify-center z-50">
+                      <div className="bg-white p-6 rounded-xl w-[90%] max-w-2xl">
+                        <Cropper
+                          src={cropImageSrc}
+                          style={{ height: 400, width: "100%" }}
+                          aspectRatio={1}
+                          guides={true}
+                          ref={cropperRef}
+                          viewMode={0}
+                          dragMode="move"
+                          autoCropArea={1}
+                          background={false}
+                          responsive={true}
+                        />
+                        <div className="flex justify-end mt-4 gap-2">
+                          <button
+                            onClick={() => setCurrentCropIndex(null)}
+                            className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 cursor-pointer"
+                          >
+                            Cancle
+                          </button>
+                          <button
+                            onClick={applyCropping}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 cursor-pointer"
+                          >
+                            Crop
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <form
+                    onSubmit={(e) => handleSubmitHITL(e, index)}
+                    className="w-full flex flex-col gap-4 justify-center"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <select
+                        value={formData[index].typeOfLeaf}
+                        onChange={(e) =>
+                          handleChange(index, "typeOfLeaf", e.target.value)
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
+                      >
+                        <option value="">-- ชนิดของใบ --</option>
+                        <option value="ใบเลี้ยงเดี่ยว">ใบเลี้ยงเดี่ยว</option>
+                        <option value="ใบเลี้ยงคู่">ใบเลี้ยงคู่</option>
+                      </select>
+
+                      <select
+                        value={formData[index].thorn}
+                        onChange={(e) =>
+                          handleChange(index, "thorn", e.target.value)
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
+                      >
+                        <option value="">-- หนามบริเวณลำต้น --</option>
+                        <option value="มีหนาม">มีหนาม</option>
+                        <option value="ไม่มีหนาม">ไม่มีหนาม</option>
+                      </select>
+
+                      <select
+                        value={formData[index].trichomes}
+                        onChange={(e) =>
+                          handleChange(index, "trichomes", e.target.value)
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
+                      >
+                        <option value="">-- ขนบริเวณลำต้น --</option>
+                        <option value="มีขน">มีขน</option>
+                        <option value="ไม่มีขน">ไม่มีขน</option>
+                      </select>
+
+                      <select
+                        value={formData[index].tip}
+                        onChange={(e) =>
+                          handleChange(index, "tip", e.target.value)
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
+                      >
+                        <option value="">-- ครีบส่วนก้านใบ --</option>
+                        <option value="มีครีบ">มีครีบ</option>
+                        <option value="ไม่มีครีบ">ไม่มีครีบ</option>
+                      </select>
+
+                      <select
+                        value={formData[index].leafBaseColor}
+                        onChange={(e) =>
+                          handleChange(index, "leafBaseColor", e.target.value)
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
+                      >
+                        <option value="">-- สีโคนใบ --</option>
+                        <option value="สีเขียว">สีเขียว</option>
+                        <option value="สีม่วง">สีม่วง</option>
+                      </select>
+
+                      <select
+                        value={formData[index].leafMiddleColor}
+                        onChange={(e) =>
+                          handleChange(index, "leafMiddleColor", e.target.value)
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
+                      >
+                        <option value="">-- สีเส้นกลางใบ --</option>
+                        <option value="สีเขียว">สีเขียว</option>
+                        <option value="สีม่วง">สีม่วง</option>
+                      </select>
+
+                      <select
+                        value={formData[index].fruit}
+                        onChange={(e) =>
+                          handleChange(index, "fruit", e.target.value)
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
+                      >
+                        <option value="">-- ผลของพืช --</option>
+                        <option value="มีผล">มีผล</option>
+                        <option value="ไม่มีผล">ไม่มีผล</option>
+                      </select>
+
+                      <select
+                        value={formData[index].shapeOfPetiole}
+                        onChange={(e) =>
+                          handleChange(index, "shapeOfPetiole", e.target.value)
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-400 focus:border-blue-400 transition-all duration-200"
+                      >
+                        <option value="">-- ลักษณะของก้านใบ --</option>
+                        <option value="ก้านตรง">ก้านตรง</option>
+                        <option value="ก้านบิดเกลียว">ก้านบิดเกลียว</option>
+                      </select>
+                    </div>
+
+                    <div className="w-full h-full flex  justify-center items-center gap-4">
+                      <button
+                        type="submit"
+                        className={`inline-block py-3 w-full rounded-full text-white font-medium text-md cursor-pointer transition-all duration-300 ${
+                          isLoading
+                            ? "bg-blue-400 cursor-not-allowed"
+                            : "bg-blue-500 hover:bg-blue-600 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                        }`}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <div className="flex items-center justify-center">
+                            <Loader className="size-5 animate-spin duration-200 mr-2" />
+                            <span>Processing...</span>
+                          </div>
+                        ) : (
+                          "Submit"
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteForm(index)}
+                        className="text-white bg-red-500 p-3 rounded-full cursor-pointer hover:bg-red-600 duration-200 transform hover:-translate-y-0.5 active:bg-red-800"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 };
 
