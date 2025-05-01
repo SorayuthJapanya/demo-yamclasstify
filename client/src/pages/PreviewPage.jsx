@@ -6,6 +6,7 @@ import { axiosInstance } from "../lib/axios";
 import { Crop, Loader, Trash2 } from "lucide-react";
 import { Cropper } from "react-cropper";
 import "cropperjs/dist/cropper.css";
+import Swal from "sweetalert2";
 
 const PreviewPage = () => {
   const { images, setImages } = useUpload();
@@ -41,7 +42,7 @@ const PreviewPage = () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
     onError: (error) => {
-      toast.error(error.response.data.message || "Something went wromg!!");
+      toast.error(error.response.data.message || "Something went wrong!!");
     },
   });
 
@@ -54,9 +55,33 @@ const PreviewPage = () => {
         return;
       }
 
-      // ใช้ preview ที่เป็น Data URL โดยตรง
-      setCropImageSrc(image.preview);
-      setCurrentCropIndex(index);
+      // โหลดภาพจาก preview
+      const img = new Image();
+      img.src = image.preview;
+
+      img.onload = () => {
+        const padding = 20;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width + padding * 2;
+        canvas.height = img.height + padding * 2;
+
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff"; // พื้นหลังขาว
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // วาดภาพไว้ตรงกลาง
+        ctx.drawImage(img, padding, padding);
+
+        // แปลงเป็น base64 แล้วเซ็ตให้ Cropper
+        const paddedDataUrl = canvas.toDataURL();
+        setCropImageSrc(paddedDataUrl);
+        setCurrentCropIndex(index);
+      };
+
+      img.onerror = () => {
+        toast.error("Failed to load image for padding");
+      };
     } catch (error) {
       console.error("Error starting crop:", error);
       toast.error("Failed to start cropping");
@@ -118,47 +143,110 @@ const PreviewPage = () => {
     setFormData(updatedFormData);
   };
 
-  // when sucmit
+  // when submit
   const handleSubmitHITL = async (e, index) => {
     e.preventDefault();
-
-    console.log("Image to send: ", images[index].file);
 
     if (!images[index]?.file) {
       toast.error("No image file found");
       return;
     }
+    console.log("Image to send: ", images[index].file);
 
-    const payLoad = new FormData();
-    payLoad.append("image", images[index].file);
-    payLoad.append("fruit", formData[index].fruit);
-    payLoad.append("leafBaseColor", formData[index].leafBaseColor);
-    payLoad.append("leafMiddleColor", formData[index].leafMiddleColor);
-    payLoad.append("shapeOfPetiole", formData[index].shapeOfPetiole);
-    payLoad.append("thorn", formData[index].thorn);
-    payLoad.append("tip", formData[index].tip);
-    payLoad.append("trichomes", formData[index].trichomes);
-    payLoad.append("typeOfLeaf", formData[index].typeOfLeaf);
-
-    // วิธีตรวจสอบ payLoad ที่ถูกต้อง
-    console.log("--- payLoad Contents ---");
-    for (let [key, value] of payLoad.entries()) {
-      if (value instanceof File) {
-        console.log(key, `File: ${value.name} (${value.size} bytes)`);
-      } else {
-        console.log(key, value);
-      }
-    }
-    classificationMutate(payLoad, {
-      onSuccess: () => {
-        toast.success("Send data completed");
-        queryClient.invalidateQueries({ queryKey: ["authUser"] });
-
-        // ลบภาพและฟอร์มที่ index นี้
-        setImages((prev) => prev.filter((_, i) => i !== index));
-        setFormData((prev) => prev.filter((_, i) => i !== index));
-      },
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to send the data?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, send it!",
+      cancelButtonText: "Cancel",
     });
+
+    if (result.isConfirmed) {
+      console.log("Sending data for index:", index);
+
+      const payLoad = new FormData();
+      payLoad.append("image", images[index].file);
+      payLoad.append("fruit", formData[index].fruit);
+      payLoad.append("leafBaseColor", formData[index].leafBaseColor);
+      payLoad.append("leafMiddleColor", formData[index].leafMiddleColor);
+      payLoad.append("shapeOfPetiole", formData[index].shapeOfPetiole);
+      payLoad.append("thorn", formData[index].thorn);
+      payLoad.append("tip", formData[index].tip);
+      payLoad.append("trichomes", formData[index].trichomes);
+      payLoad.append("typeOfLeaf", formData[index].typeOfLeaf);
+
+      console.log("--- payLoad Contents ---");
+      for (let [key, value] of payLoad.entries()) {
+        if (value instanceof File) {
+          console.log(key, `File: ${value.name} (${value.size} bytes)`);
+        } else {
+          console.log(key, value);
+        }
+      }
+
+      classificationMutate(payLoad, {
+        onSuccess: () => {
+          setImages((prev) => prev.filter((_, i) => i !== index));
+          setFormData((prev) => prev.filter((_, i) => i !== index));
+        },
+      });
+    }
+  };
+
+  const handleSubmitAllForm = async (e) => {
+    e.preventDefault();
+
+    if (images.length === 0) {
+      toast.error("No images to submit");
+      return;
+    }
+
+    const payloads = images.map((image, index) => {
+      if (!image?.file) {
+        toast.error(`No file found for image at index ${index}`);
+        return null;
+      }
+
+      const payLoad = new FormData();
+      payLoad.append("image", image.file);
+      payLoad.append("fruit", formData[index].fruit);
+      payLoad.append("leafBaseColor", formData[index].leafBaseColor);
+      payLoad.append("leafMiddleColor", formData[index].leafMiddleColor);
+      payLoad.append("shapeOfPetiole", formData[index].shapeOfPetiole);
+      payLoad.append("thorn", formData[index].thorn);
+      payLoad.append("tip", formData[index].tip);
+      payLoad.append("trichomes", formData[index].trichomes);
+      payLoad.append("typeOfLeaf", formData[index].typeOfLeaf);
+
+      return payLoad;
+    });
+
+    const validPayLoads = payloads.filter((payload) => payload !== null);
+
+    if (validPayLoads.length === 0) {
+      toast.error("No valid data to submit");
+      return;
+    }
+
+    try {
+      await Promise.all(
+        validPayLoads.map((payLoad) =>
+          axiosInstance.post("/upload-all", payLoad, {
+            header: {
+              "Content-Types": "multipart/form-data",
+            },
+          })
+        )
+      );
+
+      toast.success("All forms submitted successfully");
+      setImages([]);
+      setFormData([]);
+    } catch (error) {
+      console.log("Error submitting forms: ", error);
+      toast.error("Failed to submit all forms");
+    }
   };
 
   // When click delete
@@ -189,6 +277,16 @@ const PreviewPage = () => {
             <h1 className="text-3xl">Human In The Loop (HITL)</h1>
           </div>
 
+          <div className="w-full lg:max-w-4xl mx-auto flex justify-end mb-2">
+            <button
+              type="button"
+              onClick={handleSubmitAllForm}
+              className="px-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 active:bg-blue-900 tranform hover:-translate-y-0.5 duration-200 cursor-pointer"
+            >
+              Submit All
+            </button>
+          </div>
+
           {images.map((item, index) => (
             <div
               key={index}
@@ -203,9 +301,9 @@ const PreviewPage = () => {
                   />
                   <button
                     onClick={() => startCropping(index)}
-                    className="text-blue-500 flex items-center cursor-pointer px-3 py-2 rounded-xl shadow-xl"
+                    className="text-blue-500 flex items-center transform hover:-translate-y-0.5 hover:bg-blue-500 hover:text-white duration-200 active:bg-blue-700 cursor-pointer px-3 py-2 rounded-xl shadow-xl"
                   >
-                    <Crop className="w-4 h-4 mr-1" /> ตัดรูป & Padding
+                    <Crop className="w-4 h-4 mr-1" /> Crop
                   </button>
                 </div>
                 <div className="flex flex-col gap-2 justify-center items-center">
@@ -219,17 +317,18 @@ const PreviewPage = () => {
                           guides={true}
                           ref={cropperRef}
                           viewMode={0}
-                          dragMode="move"
-                          autoCropArea={1}
+                          dragMode="none"
+                          autoCropArea={0.7}
                           background={false}
                           responsive={true}
                         />
+
                         <div className="flex justify-end mt-4 gap-2">
                           <button
                             onClick={() => setCurrentCropIndex(null)}
                             className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 cursor-pointer"
                           >
-                            Cancle
+                            Cancel
                           </button>
                           <button
                             onClick={applyCropping}
