@@ -13,6 +13,7 @@ import AdminHomePage from "./pages/Admin/AdminHomePage";
 import Footer from "./components/Footer";
 import PreviewPage from "./pages/PreviewPage";
 import "./App.css";
+import NotFoundPage from "./pages/NotFoundPage";
 
 const App = () => {
   const { data: authUser, isLoading } = useQuery({
@@ -28,7 +29,13 @@ const App = () => {
     },
   });
 
-  if (isLoading) return null;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="loader"></div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -36,6 +43,7 @@ const App = () => {
 
       <div className="w-full bg-gray-50 flex flex-col relation">
         <Routes>
+          <Route path="*" element={<NotFoundPage />} />
           <Route path="/" element={<HomePage />} />
           <Route
             path="/classification"
@@ -55,12 +63,8 @@ const App = () => {
           <Route
             path="/admin"
             element={
-              authUser ? (
-                authUser.role === "ADMIN" ? (
-                  <AdminHomePage />
-                ) : (
-                  <Navigate to={"/login"} />
-                )
+              authUser?.role === "ADMIN" ? (
+                <AdminHomePage />
               ) : (
                 <Navigate to={"/login"} />
               )

@@ -5,8 +5,12 @@ import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 const NavBar = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const { data: authUser } = useQuery({
     queryKey: ["authUser"],
     queryFn: async () => {
@@ -20,12 +24,18 @@ const NavBar = () => {
     },
   });
 
-  const queryClient = useQueryClient();
-
   const { mutate: logout } = useMutation({
     mutationFn: () => axiosInstance.post("/auth/logout"),
+    onMutate: async () => {
+      queryClient.setQueriesData(["authUser"], null);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      toast.success("Logged out successfully");
+      navigate("/login");
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Logout failed");
     },
   });
 
@@ -67,7 +77,7 @@ const NavBar = () => {
                 <div className="flex items-center gap-6">
                   <Link to={"/"}>
                     <p className="px-3 py-2 shadow-md rounded-lg cursor-pointer">
-                      user: {authUser.name}
+                      {authUser.name}
                     </p>
                   </Link>
                   <li
