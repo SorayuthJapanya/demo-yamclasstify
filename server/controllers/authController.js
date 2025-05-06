@@ -29,6 +29,14 @@ exports.signup = async (req, res) => {
         .status(400)
         .json({ message: "Password must be at least 6 characters" });
 
+    // Check Password Strength (Uppercase & Number)
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d).+$/;
+    if (!passwordRegex.test(password))
+      return res.status(400).json({
+        message:
+          "Password must contain at least one uppercase letter and one number",
+      });
+
     // hashPassword
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -42,9 +50,13 @@ exports.signup = async (req, res) => {
     await user.save();
 
     // gen token
-    const token = jwt.sign({ userID: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    const token = jwt.sign(
+      { userID: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      }
+    );
 
     // cookie
     res.cookie("jwt-yamleaves", token, {
@@ -54,7 +66,7 @@ exports.signup = async (req, res) => {
       secure: process.env.NODE_ENV === "production",
     });
 
-    res.status(201).json({ message: "User registered successfully" });
+    res.status(201).json({ user });
 
     // todo: send welcome email
   } catch (error) {
@@ -77,9 +89,14 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
 
     // Create & send token
-    const token = jwt.sign({ userID: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    const token = jwt.sign(
+      { userID: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      }
+    );
+
     await res.cookie("jwt-yamleaves", token, {
       httpOnly: true,
       maxAge: 1 * 24 * 60 * 60 * 1000,
@@ -87,9 +104,11 @@ exports.login = async (req, res) => {
       secure: process.env.NODE_ENV === "production",
     });
 
-    res.status(201).json({ message: "Logged in successfully" });
+    const { password: _, ...userWithoutPassword } = user._doc;
+
+    res.status(201).json({ user: userWithoutPassword }); 
   } catch (error) {
-    console.log("Error in logged in controller!!");
+    console.log("Error in logged in controller!!", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

@@ -7,7 +7,7 @@ const AboutUsSection = () => {
   return (
     <div className="w-full min-h-screen flex flex-col items-center bg-gray-50 py-10 gap-20">
       {/* Section 1: RMUTL Info */}
-      <div className="w-full grid grid-cols-1 lg:grid-cols-2 items-center gap-8 px-6">
+      <div className="w-full grid grid-cols-1 md:grid-cols-2 items-center gap-8 px-6">
         {/* Left: RMUTL Logo */}
         <div className="order-2 lg:order-1 flex justify-center items-center">
           <img
@@ -17,7 +17,7 @@ const AboutUsSection = () => {
           />
         </div>
         {/* Right: RMUTL Info */}
-        <div className="order-1 lg:order-2 text-gray-700 text-base lg:text-lg leading-relaxed">
+        <div className="order-1 md:order-2 text-gray-700 text-base lg:text-lg leading-relaxed">
           <h2 className="text-3xl lg:text-4xl font-semibold text-gray-800 mb-6">
             Faculty of Engineering, Rajamangala University of Technology Lanna
           </h2>
@@ -31,7 +31,7 @@ const AboutUsSection = () => {
       </div>
 
       {/* Section 2: Plant Conservation Project */}
-      <div className="w-full grid grid-cols-1 lg:grid-cols-2 items-center gap-8 px-6 lg:px-20 mt-10">
+      <div className="w-full grid grid-cols-1 md:grid-cols-2 items-center gap-8 px-6 lg:px-20 mt-10">
         {/* Left: Project Info */}
         <div className="order-1 text-gray-700 text-base lg:text-lg leading-relaxed">
           <h2 className="text-3xl lg:text-4xl font-semibold text-green-700 mb-6">
@@ -54,7 +54,7 @@ const AboutUsSection = () => {
       </div>
 
       {/* Section 3: About the Project */}
-      <div className="w-full grid grid-cols-1 lg:grid-cols-2 items-center gap-8 px-6 lg:px-20 mt-10">
+      <div className="w-full grid grid-cols-1 md:grid-cols-2 items-center gap-8 px-6 lg:px-20 mt-10">
         {/* Left: Project Images */}
         <div className="order-2 lg:order-1 flex justify-center items-center ">
           <img
@@ -65,7 +65,7 @@ const AboutUsSection = () => {
 
         </div>
         {/* Right: Project Info */}
-        <div className="order-1 lg:order-2 text-gray-700 text-base lg:text-lg leading-relaxed">
+        <div className="order-1 md:order-2 text-gray-700 text-base lg:text-lg leading-relaxed">
           <h2 className="text-3xl lg:text-4xl font-semibold text-blue-600 mb-6">
             About the Project
           </h2>

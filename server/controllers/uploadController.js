@@ -7,6 +7,7 @@ exports.uploadImages = async (req, res) => {
     console.log("Image File:", Currentimage);
 
     const {
+      userId,
       fruit,
       leafBaseColor,
       leafMiddleColor,

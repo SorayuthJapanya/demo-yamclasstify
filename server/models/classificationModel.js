@@ -14,39 +14,23 @@ const classificationSchema = mongoose.Schema(
       type: Number,
       required: true,
     },
-    tyoeOfLeaf: {
-      type: Number,
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "USER",
       required: true,
     },
-    thorn: {
+    latitude: {
       type: Number,
-      required: true,
+      default: null,
+      min: -90,
+      max: 90,
     },
-    trichomes: {
+    longitude: {
       type: Number,
-      required: true,
+      deffault: null,
+      min: -180,
+      max: 180,
     },
-    tip: {
-      type: Number,
-      required: true,
-    },
-    leafBaseColor: {
-      type: Number,
-      required: true,
-    },
-    leafMiddleColor: {
-      type: Number,
-      required: true,
-    },
-    fruit: {
-      type: Number,
-      required: true,
-    },
-    shapeOfPetiole: {
-      type: Number,
-      required: true,
-    },
-    //   todo: User_id
     createdAt: {
       type: Date,
       default: Date.now,

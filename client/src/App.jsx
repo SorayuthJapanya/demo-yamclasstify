@@ -14,6 +14,10 @@ import Footer from "./components/Footer";
 import PreviewPage from "./pages/PreviewPage";
 import "./App.css";
 import NotFoundPage from "./pages/NotFoundPage";
+import HistoryPage from "./pages/HistoryPage";
+import ProtectedRoute from "./context/AdminProtect";
+import ManageSpeciesPage from "./pages/Admin/ManageSpeciesPage";
+import ManageUserPage from "./pages/Admin/ManageUserPage";
 
 const App = () => {
   const { data: authUser, isLoading } = useQuery({
@@ -21,6 +25,7 @@ const App = () => {
     queryFn: async () => {
       try {
         const res = await axiosInstance.get("/auth/me");
+        localStorage.setItem("userRole", res.data.role);
         return res.data;
       } catch (error) {
         if (error.response && error.response.status === 401) return null;
@@ -37,6 +42,8 @@ const App = () => {
     );
   }
 
+  const isAdmin = localStorage.getItem("userRole") === "ADMIN";
+
   return (
     <>
       <NavBar />
@@ -44,30 +51,68 @@ const App = () => {
       <div className="w-full bg-gray-50 flex flex-col relation">
         <Routes>
           <Route path="*" element={<NotFoundPage />} />
-          <Route path="/" element={<HomePage />} />
+          <Route path="/home" element={<HomePage />} />
           <Route
             path="/classification"
             element={
               authUser ? <ClassificationPage /> : <Navigate to={"/login"} />
             }
           />
+          <Route
+            path="/history"
+            element={authUser ? <HistoryPage /> : <Navigate to={"/login"} />}
+          />
           <Route path="/specie" element={<SpeciesPage />} />
           <Route
             path="/login"
-            element={!authUser ? <LoginPage /> : <Navigate to={"/"} />}
+            element={
+              authUser ? (
+                authUser.role === "ADMIN" ? (
+                  <Navigate to="/admin" />
+                ) : (
+                  <Navigate to="/home" />
+                )
+              ) : (
+                <LoginPage />
+              )
+            }
           />
           <Route
             path="/signup"
-            element={!authUser ? <SignupPage /> : <Navigate to={"/"} />}
+            element={
+              authUser ? (
+                authUser.role === "ADMIN" ? (
+                  <Navigate to="/admin" />
+                ) : (
+                  <Navigate to="/home" />
+                )
+              ) : (
+                <SignupPage />
+              )
+            }
           />
           <Route
             path="/admin"
             element={
-              authUser?.role === "ADMIN" ? (
+              <ProtectedRoute allowedRoles={["ADMIN"]} authUser={authUser}>
                 <AdminHomePage />
-              ) : (
-                <Navigate to={"/login"} />
-              )
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/manage-user"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]} authUser={authUser}>
+                <ManageUserPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/manage-spicies"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]} authUser={authUser}>
+                <ManageSpeciesPage />
+              </ProtectedRoute>
             }
           />
           <Route
@@ -78,8 +123,8 @@ const App = () => {
         <Toaster />
 
         {/* footer */}
-        <Footer />
       </div>
+      <Footer />
     </>
   );
 };

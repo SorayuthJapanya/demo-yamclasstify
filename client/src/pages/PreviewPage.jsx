@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useUpload } from "../context/UploadContext";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
 import { Crop, Loader, Trash2 } from "lucide-react";
@@ -16,8 +16,24 @@ const PreviewPage = () => {
   const [currentCropIndex, setCurrentCropIndex] = useState(null);
   const [cropImageSrc, setCropImageSrc] = useState(null);
 
+  const { data: authUser } = useQuery({
+    queryKey: ["authUser"],
+    queryFn: async () => {
+      try {
+        const res = await axiosInstance.get("/auth/me");
+        return res.data;
+      } catch (error) {
+        if (error.response && error.response.status === 401) return null;
+        toast.error(error.response.data.message || "Something went wrong");
+      }
+    },
+  });
+
+  // console.log("authUser", authUser._id);
+
   const [formData, setFormData] = useState(
     images.map(() => ({
+      userId: authUser._id,
       typeOfLeaf: "",
       thorn: "",
       trichomes: "",
@@ -163,10 +179,11 @@ const PreviewPage = () => {
     });
 
     if (result.isConfirmed) {
-      console.log("Sending data for index:", index);
+      // console.log("Sending data for index:", index);
 
       const payLoad = new FormData();
       payLoad.append("image", images[index].file);
+      payLoad.append("userId", formData[index].userId);
       payLoad.append("fruit", formData[index].fruit);
       payLoad.append("leafBaseColor", formData[index].leafBaseColor);
       payLoad.append("leafMiddleColor", formData[index].leafMiddleColor);
@@ -176,14 +193,14 @@ const PreviewPage = () => {
       payLoad.append("trichomes", formData[index].trichomes);
       payLoad.append("typeOfLeaf", formData[index].typeOfLeaf);
 
-      console.log("--- payLoad Contents ---");
-      for (let [key, value] of payLoad.entries()) {
-        if (value instanceof File) {
-          console.log(key, `File: ${value.name} (${value.size} bytes)`);
-        } else {
-          console.log(key, value);
-        }
-      }
+      // console.log("--- payLoad Contents ---");
+      // for (let [key, value] of payLoad.entries()) {
+      //   if (value instanceof File) {
+      //     console.log(key, `File: ${value.name} (${value.size} bytes)`);
+      //   } else {
+      //     console.log(key, value);
+      //   }
+      // }
 
       classificationMutate(payLoad, {
         onSuccess: () => {

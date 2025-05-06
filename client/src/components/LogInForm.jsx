@@ -9,15 +9,25 @@ const LogInForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { mutate: loginMutation, isLoading } = useMutation({
     mutationFn: (userData) => axiosInstance.post("/auth/login", userData),
-    onSuccess: () => {
-      toast.success("Logged In successfully");
-      queryClient.invalidateQueries({ queryKey:   ["authUser"] });
-      navigate("/");
+    onSuccess: (response) => {
+      const { role } = response.data.user;
+
+      localStorage.setItem("userRole", role);
+
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+
+      toast.success("Logged in successfully");
+
+      if (role === "ADMIN") {
+        navigate("/admin");
+      } else {
+        navigate("/home");
+      }
     },
     onError: (error) => {
       toast.error(error.response.data.message || "Something went wrong!!");
