@@ -31,7 +31,6 @@ router.post("/logout", logout);
 
 // CRUD API
 router.get("/allusers", protectRoute, adminOnly, getAllUsers);
-router.get("/user", protectRoute, getUser);
 router.put("/user/:_id", protectRoute, adminOnly, updateUser);
 router.delete("/user/:_id", protectRoute, adminOnly, deleteUser);
 

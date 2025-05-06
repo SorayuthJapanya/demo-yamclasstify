@@ -152,9 +152,6 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-exports.getUser = (req, res) => {
-  res.send("Hello getUser Controller!!");
-};
 
 exports.updateUser = async (req, res) => {
   try {
@@ -196,7 +193,7 @@ exports.deleteUser = async (req, res) => {
     if (req.user.role !== "ADMIN") {
       return res.status(403).json({ message: "Only Admin can delete" });
     }
-    
+
     // Check And Delete User
     const user = await User.findByIdAndDelete(_id);
     if (!user) return res.status(404).json({ message: "User not found" });
