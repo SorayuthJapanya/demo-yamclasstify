@@ -106,7 +106,7 @@ exports.login = async (req, res) => {
 
     const { password: _, ...userWithoutPassword } = user._doc;
 
-    res.status(201).json({ user: userWithoutPassword }); 
+    res.status(201).json({ user: userWithoutPassword });
   } catch (error) {
     console.log("Error in logged in controller!!", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -123,6 +123,87 @@ exports.getCurrentUser = (req, res) => {
     res.json(req.user);
   } catch (error) {
     console.log("Error in getCurrentUser controller");
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    // Find all users
+    const users = await User.find()
+      .skip(skip)
+      .limit(limit)
+      .select("-password ");
+
+    const totalUsers = await User.countDocuments();
+
+    res.status(200).json({
+      users,
+      totalUsers,
+      totalPages: Math.ceil(totalUsers / limit),
+      currentPage: page,
+    });
+  } catch (error) {
+    console.log("Error in getAllUsers controller", error);
+    res.status(500).json({});
+  }
+};
+
+exports.getUser = (req, res) => {
+  res.send("Hello getUser Controller!!");
+};
+
+exports.updateUser = async (req, res) => {
+  try {
+    const { _id } = req.params;
+    const { name, role } = req.body;
+
+    // Check if user exists
+    const user = await User.findById(_id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // If Name & Role are provided
+    if (name) user.name = name;
+    if (role) {
+      if (req.user.role !== "ADMIN") {
+        return res.status(403).json({ message: "Only Admin can update" });
+      }
+      user.role = role;
+    }
+
+    // Save the Updates User
+    const updateUser = await user.save();
+
+    const { password: _, ...userWithoutPassword } = updateUser._doc;
+
+    res
+      .status(200)
+      .json({ message: "User updated successfuly", user: userWithoutPassword });
+  } catch (error) {
+    console.log("Error on updateUser controller!!", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { _id } = req.params;
+
+    // Check role ADMIN
+    if (req.user.role !== "ADMIN") {
+      return res.status(403).json({ message: "Only Admin can delete" });
+    }
+    
+    // Check And Delete User
+    const user = await User.findByIdAndDelete(_id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.log("Error on deleteUser controller!!", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
