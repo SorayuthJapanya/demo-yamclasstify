@@ -7,7 +7,7 @@ const { uploadImages, uploadMultipleImages } = require("../controllers/uploadCon
 // Middleware
 const upload = require("../middleware/uploadMiddleware");
 
-router.post("/upload", upload.single("image"), uploadImages);
-router.post("/upload-all", upload.array("image", 10), uploadMultipleImages);
+router.post("/upload", upload.single("image"), uploadImages); // ENDPOINT:  http://localhost:5001/api/v1/upload
+router.post("/upload-all", upload.array("image", 10), uploadMultipleImages); // ENDPOINT:  http://localhost:5001/api/v1/upload-all
 
 module.exports = router;

@@ -8,6 +8,7 @@ const path = require("path");
 const { connectDB } = require("./config/connectDB");
 const authRoutes = require("./routes/authRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
+const speciesRoutes = require("./routes/speciesRoutes");
 
 //Config
 dotenv.config();
@@ -30,6 +31,7 @@ app.use(
 // Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1", uploadRoutes);
+app.use("/api/v1/species", speciesRoutes)
 
 // Server React
 

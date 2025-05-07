@@ -127,15 +127,31 @@ exports.getCurrentUser = (req, res) => {
   }
 };
 
-exports.getAllUsers = async (req, res) => {
+exports.getUser = async (req, res) => {
+  try {
+    const { _id } = req.params;
+
+    const user = await User.findById(_id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found!!" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.log("Error in getUser controller", error);
+    res.status(500).json({ message: "Internal Server Error!!" });
+  }
+};
+
+exports.getAllClient = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
 
     // Find all users
     const users = await User.find()
-      .skip(skip)
-      .limit(limit)
+      .skip(Number(skip))
+      .limit(Number(limit))
       .select("-password ");
 
     const totalUsers = await User.countDocuments();
@@ -148,15 +164,64 @@ exports.getAllUsers = async (req, res) => {
     });
   } catch (error) {
     console.log("Error in getAllUsers controller", error);
-    res.status(500).json({});
+    res.status(500).json({ message: "Internal Server Error!!" });
   }
 };
 
+exports.getAllUsers = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    // Find all users
+    const users = await User.find({ role: "USER" })
+      .skip(skip)
+      .limit(limit)
+      .select("-password ");
+
+    const totalUsers = await User.countDocuments({ role: "USER" });
+
+    res.status(200).json({
+      users,
+      totalUsers,
+      totalPages: Math.ceil(totalUsers / limit),
+      currentPage: page,
+    });
+  } catch (error) {
+    console.log("Error in getAllUsers controller", error);
+    res.status(500).json({ message: "Internal Server Error!!" });
+  }
+};
+
+exports.getAllAdmins = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    // Find all users
+    const users = await User.find({ role: "ADMIN" })
+      .skip(skip)
+      .limit(limit)
+      .select("-password ");
+
+    const totalUsers = await User.countDocuments({ role: "ADMIN" });
+
+    res.status(200).json({
+      users,
+      totalUsers,
+      totalPages: Math.ceil(totalUsers / limit),
+      currentPage: page,
+    });
+  } catch (error) {
+    console.log("Error in getAllAdmins controller", error);
+    res.status(500).json({ message: "Internal Server Error!!" });
+  }
+};
 
 exports.updateUser = async (req, res) => {
   try {
     const { _id } = req.params;
-    const { name, role } = req.body;
+    const { name, email, role } = req.body;
 
     // Check if user exists
     const user = await User.findById(_id);
@@ -164,6 +229,7 @@ exports.updateUser = async (req, res) => {
 
     // If Name & Role are provided
     if (name) user.name = name;
+    if (email) user.email = email;
     if (role) {
       if (req.user.role !== "ADMIN") {
         return res.status(403).json({ message: "Only Admin can update" });
