@@ -3,16 +3,18 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../lib/axios.js";
 import { toast } from "react-hot-toast";
 import { Loader } from "lucide-react";
-import { Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const SignupForm = () => {
   // set all fields
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const isAdmin = localStorage.getItem("userRole") === "ADMIN";
 
   //   call backend useMutation ( POST, PUT, DELETE )
   const { mutate: signUpMutation, isLoading } = useMutation({
@@ -21,9 +23,12 @@ const SignupForm = () => {
       return res.data;
     },
     onSuccess: () => {
-      toast.success("Accout created seuccesfully");
-      queryClient.invalidateQueries({ queryKey: ["authUser"] });
-      Navigate("/")
+      toast.success("Account created successfully");
+      if (isAdmin) {
+        navigate("/admin/manage-admin");
+      } else {
+        navigate("/");
+      }
     },
     onError: (err) =>
       toast.error(err.response.data.message || "Something went wrong!!"),
@@ -34,7 +39,7 @@ const SignupForm = () => {
     e.preventDefault();
     if (password !== confirmPassword)
       return toast.error("Password do not match");
-    signUpMutation({ name, email, password, confirmPassword });
+    signUpMutation({ name, email, role, password, confirmPassword });
   };
 
   return (
@@ -44,7 +49,7 @@ const SignupForm = () => {
     >
       {/* Title */}
       <div className="text-center text-3xl md:text-3xl lg:text-4xl font-semibold pb-6">
-        <h2>Sign Up</h2>
+        {isAdmin ? <h2>Add New User</h2> : <h2>Sgn Up</h2>}
       </div>
 
       {/* Input */}
@@ -70,6 +75,19 @@ const SignupForm = () => {
           required
         />
       </div>
+      {isAdmin && (
+        <div className="w-full">
+        <input
+          type="text"
+          placeholder="** USER && ADMIN **"
+          value={role}
+          id="role"
+          onChange={(e) => setRole(e.target.value)}
+          className="border px-3 py-2 border-gray-400 rounded-lg w-full"
+          required
+        />
+      </div>
+      )}
       <div className="w-full">
         <input
           type="password"

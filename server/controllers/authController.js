@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 
 exports.signup = async (req, res) => {
   try {
-    const { name, email, password, confirmPassword } = req.body;
+    const { name, email, role, password, confirmPassword } = req.body;
     // Check Required
     if (!name || !email || !password || !confirmPassword)
       return res.status(400).json({ message: "All feilds are reuired" });
@@ -19,8 +19,16 @@ exports.signup = async (req, res) => {
     if (existingName)
       return res.status(400).json({ message: "Username already exists" });
 
-    // Confirm password
+    // Normalize Role to Uppercase
+    const normalizedRole = role ? role.toUpperCase() : "USER";
+
+    // Validate Role
+    if (normalizedRole !== "USER" && normalizedRole !== "ADMIN") {
+      return res.status(400).json({ message: "Invalid role provided" });
+    }
+
     if (password !== confirmPassword)
+      // Confirm password
       return res.status(400).json({ message: "Password is not match" });
 
     // Check length password
@@ -45,28 +53,12 @@ exports.signup = async (req, res) => {
     const user = new User({
       name,
       email,
+      role: normalizedRole,
       password: hashedPassword,
     });
     await user.save();
 
-    // gen token
-    const token = jwt.sign(
-      { userID: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1d",
-      }
-    );
-
-    // cookie
-    res.cookie("jwt-yamleaves", token, {
-      httpOnly: true,
-      maxAge: 1 * 24 * 60 * 60 * 1000,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-    });
-
-    res.status(201).json({ user });
+    res.status(201).json({ message: "Signed up successfully", user });
 
     // todo: send welcome email
   } catch (error) {
@@ -230,11 +222,20 @@ exports.updateUser = async (req, res) => {
     // If Name & Role are provided
     if (name) user.name = name;
     if (email) user.email = email;
-    if (role) {
+
+    // Normalize Role to Uppercase
+    const normalizedRole = role ? role.toUpperCase() : "USER";
+
+    // Validate Role
+    if (normalizedRole !== "USER" && normalizedRole !== "ADMIN") {
+      return res.status(400).json({ message: "Invalid role provided" });
+    }
+
+    if (normalizedRole) {
       if (req.user.role !== "ADMIN") {
         return res.status(403).json({ message: "Only Admin can update" });
       }
-      user.role = role;
+      user.role = normalizedRole;
     }
 
     // Save the Updates User

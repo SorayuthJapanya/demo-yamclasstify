@@ -98,17 +98,17 @@ const NavBar = () => {
               <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
                 <Link
                   onClick={() => setIsMenuOpen(false)}
-                  to="/admin/manage-user"
+                  to="/admin/manage-admin"
                   className="hover:text-blue-500"
                 >
-                  Manage User
+                  Manage Users
                 </Link>
                 <Link
                   onClick={() => setIsMenuOpen(false)}
-                  to="/admin/manage-spicies"
+                  to="/admin/manage-species"
                   className="hover:text-blue-500"
                 >
-                  Manage Spicies
+                  Manage Species
                 </Link>
               </div>
             ) : authUser ? (

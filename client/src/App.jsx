@@ -17,7 +17,8 @@ import NotFoundPage from "./pages/NotFoundPage";
 import HistoryPage from "./pages/HistoryPage";
 import ProtectedRoute from "./context/AdminProtect";
 import ManageSpeciesPage from "./pages/Admin/ManageSpeciesPage";
-import ManageUserPage from "./pages/Admin/ManageUserPage";
+import ManageAdmin from "./pages/Admin/ManageAdminPage";
+import EditPage from "./pages/auth/EditPage";
 
 const App = () => {
   const { data: authUser, isLoading } = useQuery({
@@ -42,16 +43,18 @@ const App = () => {
     );
   }
 
-  const isAdmin = localStorage.getItem("userRole") === "ADMIN";
-
   return (
     <>
       <NavBar />
 
       <div className="w-full bg-gray-50 flex flex-col relation">
         <Routes>
+          
+          {/* Public */}
           <Route path="*" element={<NotFoundPage />} />
           <Route path="/home" element={<HomePage />} />
+
+          {/*  */}
           <Route
             path="/classification"
             element={
@@ -62,7 +65,13 @@ const App = () => {
             path="/history"
             element={authUser ? <HistoryPage /> : <Navigate to={"/login"} />}
           />
+          <Route
+            path="/preview"
+            element={authUser ? <PreviewPage /> : <Navigate to={"/login"} />}
+          />
           <Route path="/specie" element={<SpeciesPage />} />
+
+          {/* Authen */}
           <Route
             path="/login"
             element={
@@ -79,18 +88,14 @@ const App = () => {
           />
           <Route
             path="/signup"
-            element={
-              authUser ? (
-                authUser.role === "ADMIN" ? (
-                  <Navigate to="/admin" />
-                ) : (
-                  <Navigate to="/home" />
-                )
-              ) : (
-                <SignupPage />
-              )
-            }
+            element={<SignupPage />}
           />
+          <Route
+            path="/edit/:id"
+            element={<EditPage />}
+          />
+
+          {/* Admin */}
           <Route
             path="/admin"
             element={
@@ -100,29 +105,23 @@ const App = () => {
             }
           />
           <Route
-            path="/admin/manage-user"
+            path="/admin/manage-admin"
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]} authUser={authUser}>
-                <ManageUserPage />
+                <ManageAdmin />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/admin/manage-spicies"
+            path="/admin/manage-species"
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]} authUser={authUser}>
                 <ManageSpeciesPage />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/preview"
-            element={authUser ? <PreviewPage /> : <Navigate to={"/login"} />}
-          />
         </Routes>
         <Toaster />
-
-        {/* footer */}
       </div>
       <Footer />
     </>
