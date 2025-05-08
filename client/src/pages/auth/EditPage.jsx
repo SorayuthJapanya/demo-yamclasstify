@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import EditForm from "../../components/EditForm";
+import EditForm from "../../components/auth/EditForm"
 
 const SignupPage = () => {
   return (

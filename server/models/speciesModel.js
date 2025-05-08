@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 const speciesSchema = mongoose.Schema(
   {
     imageUrl: {
-      type: String,
-      required: true,
+      data: Buffer,
+      contentType: String,
     },
     commonName: {
       type: String,
@@ -25,10 +25,27 @@ const speciesSchema = mongoose.Schema(
     },
     description: {
       type: String,
-      required: true,
+    },
+    propagation: {
+      type: String,
+    },
+    plantingseason: {
+      type: String,
+    },
+    harvestingseason: {
+      type: String,
+    },
+    utilization: {
+      type: String,
+    },
+    status: {
+      type: String,
+    },
+    surveysite: {
+      type: String,
     },
   },
-  { timeStamp: true }
+  { timestamps: true }
 );
 
 module.exports = mongoose.model("Species", speciesSchema);

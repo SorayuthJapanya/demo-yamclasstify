@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useUpload } from "../context/UploadContext";
+import { useUpload } from "../../context/UploadContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { axiosInstance } from "../lib/axios";
+import { axiosInstance } from "../../lib/axios";
 import { Crop, Loader, Trash2 } from "lucide-react";
 import { Cropper } from "react-cropper";
 import "cropperjs/dist/cropper.css";

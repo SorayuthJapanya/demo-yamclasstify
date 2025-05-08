@@ -1,5 +1,5 @@
 import React from "react";
-import HeroClassification from "../../components/HeroClassification";
+import HeroClassification from "../../components/classification/HeroClassification";
 
 const ClassificationPage = () => {
   return (

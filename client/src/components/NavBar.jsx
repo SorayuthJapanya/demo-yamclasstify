@@ -98,6 +98,13 @@ const NavBar = () => {
               <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
                 <Link
                   onClick={() => setIsMenuOpen(false)}
+                  to="/admin"
+                  className="hover:text-blue-500"
+                >
+                  Home
+                </Link>
+                <Link
+                  onClick={() => setIsMenuOpen(false)}
                   to="/admin/manage-admin"
                   className="hover:text-blue-500"
                 >

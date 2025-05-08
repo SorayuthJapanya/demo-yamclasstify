@@ -22,7 +22,7 @@ const ManageAdmin = () => {
       return res.data;
     },
     onError: (error) => {
-      setError(error.response?.data?.message || "Failed to fetch admins data");
+      toast.error(error.response?.data?.message || "Failed to fetch admins data");
     },
   });
 
@@ -39,7 +39,7 @@ const ManageAdmin = () => {
   });
 
   const { mutate: searchUsers } = useMutation({
-    mutationFn: (name) => axiosInstance.get(`/auth/search?name=${name}`),
+    mutationFn: async (name) => await axiosInstance.get(`/auth/search?name=${name}`),
     onSuccess: (response) => {
       toast.success("Search user successfully");
       setUsersData(response.data.users);
@@ -47,6 +47,9 @@ const ManageAdmin = () => {
       setIsSearch(true);
       refetch();
     },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "failed to search users")
+    }
   });
 
   const handleEdit = (userId) => {
@@ -136,7 +139,7 @@ const ManageAdmin = () => {
               <Link to={"/signup"}>
                 <button
                   type="button"
-                  className="text-end px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700 cursor-pointer activer:bg-blue-900 duration-200"
+                  className="text-end px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-700 cursor-pointer active:bg-blue-900 duration-200"
                 >
                   Add New User
                 </button>

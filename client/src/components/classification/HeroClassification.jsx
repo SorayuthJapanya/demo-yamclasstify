@@ -1,5 +1,5 @@
 import React from "react";
-import InputImg from "./InputImg";
+import InputImg from "../InputImg";
 
 const HeroClassification = () => {
   return (

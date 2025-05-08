@@ -1,5 +1,5 @@
 import React from "react";
-import InputImg from "../components/InputImg";
+import InputImg from "../InputImg";
 import AboutUsSection from "./AboutUsSection";
 
 const HomePageSection = () => {
