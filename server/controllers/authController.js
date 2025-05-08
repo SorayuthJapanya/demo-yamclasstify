@@ -160,56 +160,6 @@ exports.getAllClient = async (req, res) => {
   }
 };
 
-exports.getAllUsers = async (req, res) => {
-  try {
-    const { page = 1, limit = 10 } = req.query;
-    const skip = (page - 1) * limit;
-
-    // Find all users
-    const users = await User.find({ role: "USER" })
-      .skip(skip)
-      .limit(limit)
-      .select("-password ");
-
-    const totalUsers = await User.countDocuments({ role: "USER" });
-
-    res.status(200).json({
-      users,
-      totalUsers,
-      totalPages: Math.ceil(totalUsers / limit),
-      currentPage: page,
-    });
-  } catch (error) {
-    console.log("Error in getAllUsers controller", error);
-    res.status(500).json({ message: "Internal Server Error!!" });
-  }
-};
-
-exports.getAllAdmins = async (req, res) => {
-  try {
-    const { page = 1, limit = 10 } = req.query;
-    const skip = (page - 1) * limit;
-
-    // Find all users
-    const users = await User.find({ role: "ADMIN" })
-      .skip(skip)
-      .limit(limit)
-      .select("-password ");
-
-    const totalUsers = await User.countDocuments({ role: "ADMIN" });
-
-    res.status(200).json({
-      users,
-      totalUsers,
-      totalPages: Math.ceil(totalUsers / limit),
-      currentPage: page,
-    });
-  } catch (error) {
-    console.log("Error in getAllAdmins controller", error);
-    res.status(500).json({ message: "Internal Server Error!!" });
-  }
-};
-
 exports.updateUser = async (req, res) => {
   try {
     const { _id } = req.params;
@@ -266,6 +216,40 @@ exports.deleteUser = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.log("Error on searchUser controller!!", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+exports.searchUser = async (req, res) => {
+  try {
+    const { name } = req.query;
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    if (!name)
+      return res.status(400).json({ message: "Search query is not required" });
+
+    const users = await User.find({
+      $or: [{ name: { $regex: name, $options: "i" } }],
+    })
+      .skip(Number(skip))
+      .limit(Number(limit));
+
+    if (users.length === 0)
+      return res.status(404).json({ message: "No users found" });
+
+    const totalUsers = await User.countDocuments();
+
+    res
+      .status(200)
+      .json({
+        users,
+        totalUsers,
+        totalPages: Math.ceil(totalUsers / limit),
+        currentPage: page,
+      });
   } catch (error) {
     console.log("Error on deleteUser controller!!", error);
     res.status(500).json({ message: "Internal Server Error" });

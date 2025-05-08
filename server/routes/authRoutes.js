@@ -7,11 +7,10 @@ const {
   logout,
   getCurrentUser,
   getAllClient,
-  getAllUsers,
-  getAllAdmins,
   getUser,
   updateUser,
   deleteUser,
+  searchUser,
 } = require("../controllers/authController");
 
 // middleware
@@ -31,10 +30,11 @@ router.post("/signup", signup); // ENDPOINT: http://localhost:5001/api/v1/auth/s
 router.post("/login", login); // ENDPOINT: http://localhost:5001/api/v1/auth/login
 router.post("/logout", logout); // ENDPOINT: http://localhost:5001/api/v1/auth/logout
 
+// Search User
+router.get("/search", protectRoute, adminOnly, searchUser); // ENDPOINT: http://localhost:5001/api/v1/auth/search?name=euro
+
 // CRUD API
 router.get("/allclient", protectRoute, adminOnly, getAllClient); // ENDPOINT: http://localhost:5001/api/v1/auth/allclient
-router.get("/allusers", protectRoute, adminOnly, getAllUsers); // ENDPOINT: http://localhost:5001/api/v1/auth/allusers
-router.get("/alladmins", protectRoute, adminOnly, getAllAdmins); // ENDPOINT: http://localhost:5001/api/v1/auth/alladmins
 router.get("/get-user/:_id", protectRoute, adminOnly, getUser); // ENDPOINT: http://localhost:5001/api/v1/auth/get-user/:_id
 router.put("/update-user/:_id", protectRoute, adminOnly, updateUser); // ENDPOINT: http://localhost:5001/api/v1/auth/update-user/:_id
 router.delete("/delete-user/:_id", protectRoute, adminOnly, deleteUser); // ENDPOINT: http://localhost:5001/api/v1/auth/delete-user/:_id

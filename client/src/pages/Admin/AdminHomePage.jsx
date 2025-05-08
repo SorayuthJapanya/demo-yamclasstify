@@ -11,23 +11,7 @@ const AdminHomePage = () => {
       </header>
 
       {/* Admin Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Manage Users */}
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Manage Admins
-          </h2>
-          <p className="text-gray-600 mb-4">
-            View, edit, or delete admin accounts.
-          </p>
-          <Link
-            to="/admin/manage-admin"
-            className="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded-lg inline-block"
-          >
-            Go to Admin Management
-          </Link>
-        </div>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Manage Users */}
         <div className="bg-white shadow-md rounded-lg p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
@@ -37,7 +21,7 @@ const AdminHomePage = () => {
             View, edit, or delete user accounts.
           </p>
           <Link
-            to="/admin/manage-user"
+            to="/admin/manage-admin"
             className="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-block"
           >
             Go to User Management
