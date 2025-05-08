@@ -23,13 +23,7 @@ exports.addSpecie = async (req, res) => {
       !localName ||
       !scientificName ||
       !familyName ||
-      !description ||
-      !propagation ||
-      !plantingseason ||
-      !harvestingseason ||
-      !utilization ||
-      !status ||
-      !surveysite
+      !description 
     ) {
       return res.status(400).json({ message: "All fields are required!!" });
     }

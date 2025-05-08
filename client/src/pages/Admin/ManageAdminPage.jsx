@@ -30,7 +30,6 @@ const ManageAdmin = () => {
     mutationFn: (userId) => axiosInstance.delete(`/auth/delete-user/${userId}`),
     onSuccess: (response) => {
       toast.success(response.data.message);
-      setDataPages(response.data);
       refetch();
     },
     onError: (error) => {
