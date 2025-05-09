@@ -120,19 +120,20 @@ const EditSpeciesForm = () => {
       onSubmit={handleSubmit}
       className="flex flex-col gap-4 p-6 max-w-5xl mx-auto relative"
     >
-      <button className="absolute right-2 top-2 px-3 py-2 text-white bg-red-600 hover:bg-red-700 cursor-pointer rounded-md duration-200">
-        <Link to={"/admin/manage-species"}>Go Back</Link>
-      </button>
+      <Link
+        to="/admin/manage-species"
+        className="absolute right-2 z-50 top-2 px-3 py-2 text-white bg-red-600 hover:bg-red-700 cursor-pointer rounded-md duration-200"
+      >
+        Go Back
+      </Link>
       {/* Image Upload Section */}
       <div className="flex flex-col items-center gap-4 relative py-2 mb-2">
         <img
           src={
             image
               ? URL.createObjectURL(image)
-              : existingImage && existingImage.data
-              ? `data:${existingImage.contentType};base64,${Buffer.from(
-                  existingImage.data
-                ).toString("base64")}`
+              : existingImage
+              ? `${import.meta.env.VITE_SERVER_URL}/uploads/${existingImage}`
               : "/solid.png"
           }
           alt="Preview"

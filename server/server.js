@@ -27,14 +27,14 @@ app.use(
     credentials: true,
   })
 );
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1", uploadRoutes);
-app.use("/api/v1/species", speciesRoutes)
+app.use("/api/v1/species", speciesRoutes);
 
 // Server React
-
 
 app.listen(PORT, async () => {
   await connectDB();

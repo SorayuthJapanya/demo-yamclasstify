@@ -63,9 +63,9 @@ const ViewInfoSpeciePage = () => {
         {/* Image Section */}
         <div className="mb-10 gap-4 flex flex-col items-center justify-center">
           <img
-            src={`data:${species.imageUrl.contentType};base64,${Buffer.from(
-              species.imageUrl.data
-            ).toString("base64")}`}
+            src={`${import.meta.env.VITE_SERVER_URL}/uploads/${
+              species.imageUrl
+            }`}
             alt={species.commonName}
             className="w-70 h-auto object-cover rounded"
           />

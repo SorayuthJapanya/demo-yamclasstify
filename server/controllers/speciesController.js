@@ -1,4 +1,6 @@
 const Species = require("../models/speciesModel");
+const fs = require("fs");
+const path = require("path");
 
 exports.addSpecie = async (req, res) => {
   try {
@@ -23,9 +25,9 @@ exports.addSpecie = async (req, res) => {
       !localName ||
       !scientificName ||
       !familyName ||
-      !description 
+      !description
     ) {
-      return res.status(400).json({ message: "All fields are required!!" });
+      return res.status(400).json({ message: "5 fields are required!!" });
     }
 
     // Check if scientificName already exists
@@ -37,10 +39,7 @@ exports.addSpecie = async (req, res) => {
     }
 
     const newSpecies = new Species({
-      imageUrl: {
-        data: currentImage.buffer,
-        contentType: currentImage.mimetype,
-      },
+      imageUrl: currentImage.filename,
       commonName,
       localName,
       scientificName,
@@ -141,12 +140,23 @@ exports.updateSpecie = async (req, res) => {
     if (surveysite) specie.surveysite = surveysite;
 
     if (currentImage) {
-      specie.imageUrl = {
-        data: currentImage.buffer, // Binary data of the uploaded file
-        contentType: currentImage.mimetype, // MIME type of the uploaded file
-      };
-    }
+      // Delete the old image file if it exists
+      if (specie.imageUrl) {
+        const oldImagePath = path.join(
+          __dirname,
+          "../uploads",
+          specie.imageUrl
+        );
+        fs.unlink(oldImagePath, (err) => {
+          if (err) {
+            console.error("Error deleting old image file:", err);
+          }
+        });
+      }
 
+      // Update the imageUrl field with the new image
+      specie.imageUrl = currentImage.filename;
+    }
     const updatedSpecie = await specie.save();
 
     res
@@ -166,6 +176,16 @@ exports.deleteSpecie = async (req, res) => {
     if (!specie)
       return res.status(404).json({ message: "This specie not found" });
 
+    // Delete file image in folder uploads
+    if (specie.imageUrl) {
+      const imagePath = path.join(__dirname, "../uploads", specie.imageUrl);
+      fs.unlink(imagePath, (err) => {
+        if (err) return console.log("Error Delete image file");
+      });
+    }
+
+    await Species.findByIdAndDelete(_id);
+
     res.status(200).json({ message: "Specie deleted successfully" });
   } catch (error) {
     console.log("Error in deleteSpecie controller", error);
@@ -177,7 +197,9 @@ exports.searchSpecies = async (req, res) => {
   try {
     const { query } = req.query;
     const { page = 1, limit = 10 } = req.query;
-    const skip = (page - 1) * limit;
+    const pageNumber = Math.max(1, parseInt(page, 10));
+    const limitNumber = Math.max(1, parseInt(limit, 10));
+    const skip = (pageNumber - 1) * limitNumber;
 
     if (!query)
       return res.status(400).json({ message: "Search query is required" });
@@ -188,20 +210,26 @@ exports.searchSpecies = async (req, res) => {
         { localName: { $regex: query, $options: "i" } },
       ],
     })
-      .skip(Number(skip))
-      .limit(Number(limit));
+      .skip(skip)
+      .limit(limitNumber);
 
     if (species.length === 0) {
       return res.status(404).json({ message: "No species found" });
     }
 
-    const totalSpecies = await Species.countDocuments();
+    const totalSpecies = await Species.countDocuments({
+      $or: [
+        { commonName: { $regex: query, $options: "i" } },
+        { localName: { $regex: query, $options: "i" } },
+        { scientificName: { $regex: query, $options: "i" } },
+      ],
+    });
 
     res.status(200).json({
       species,
       totalSpecies,
       totalPages: Math.ceil(totalSpecies / limit),
-      currentPage: page,
+      currentPage: pageNumber,
     });
   } catch (error) {
     console.log("Error in searchSpecies controller", error);

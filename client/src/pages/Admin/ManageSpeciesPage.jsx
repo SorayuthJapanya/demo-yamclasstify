@@ -94,8 +94,8 @@ const ManageSpeciesPage = () => {
   };
 
   const handleViewSpecies = (speciesId) => {
-    navigate(`/specie/${speciesId}`)
-  }
+    navigate(`/specie/${speciesId}`);
+  };
 
   useEffect(() => {
     if (data) {
@@ -103,6 +103,8 @@ const ManageSpeciesPage = () => {
       setSpeciesPages(data);
     }
   }, [data]);
+
+  console.log(speciesData);
 
   return (
     <div className="min-h-160 p-6 flex flex-col items-center">
@@ -190,14 +192,11 @@ const ManageSpeciesPage = () => {
                     >
                       <td className="px-4 py-4">{index + 1}</td>
                       <td className="px-4 py-4 flex items-center justify-center">
-                        {species.imageUrl?.data &&
-                        species.imageUrl?.contentType ? (
+                        {species.imageUrl ? (
                           <img
-                            src={`data:${
-                              species.imageUrl.contentType
-                            };base64,${Buffer.from(
-                              species.imageUrl.data
-                            ).toString("base64")}`}
+                            src={`${
+                              import.meta.env.VITE_SERVER_URL
+                            }/uploads/${species.imageUrl}`}
                             alt={species.commonName}
                             className="size-30 object-cover rounded-md"
                           />
@@ -215,9 +214,10 @@ const ManageSpeciesPage = () => {
                       <td className="px-4 py-4">
                         <div className="w-full h-full flex gap-2 items-center justify-center">
                           <button className="bg-blue-500 text-white px-2 py-2 rounded-full hover:bg-blue-700 cursor-pointer duration-200">
-                            <Eye 
+                            <Eye
                               onClick={() => handleViewSpecies(species._id)}
-                            className="size-5" />
+                              className="size-5"
+                            />
                           </button>
                           <button className="bg-blue-500 text-white px-2 py-2 rounded-full hover:bg-blue-700 cursor-pointer duration-200">
                             <Edit

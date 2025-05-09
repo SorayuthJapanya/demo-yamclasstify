@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 const speciesSchema = mongoose.Schema(
   {
     imageUrl: {
-      data: Buffer,
-      contentType: String,
+      type: String,
+      required: true,
     },
     commonName: {
       type: String,
