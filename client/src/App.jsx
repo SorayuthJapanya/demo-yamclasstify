@@ -89,7 +89,7 @@ const App = () => {
           />
 
           {/* Species */}
-          <Route path="/specie" element={<SpeciesPage />} />
+          <Route path="/species" element={<SpeciesPage />} />
           <Route path="/specie/:id" element={<ViewInfoSpeciePage />} />
           <Route
             path="/admin/add-species"

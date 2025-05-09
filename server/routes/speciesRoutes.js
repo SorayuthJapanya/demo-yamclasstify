@@ -37,7 +37,7 @@ router.get("/all", getAllSpecies);
 router.get("/search", searchSpecies);
 
 
-router.get("/:_id", protectRoute, adminOnly, getOneSpecie);
+router.get("/:_id", protectRoute, getOneSpecie);
 router.put(
   "/:_id",
   protectRoute,

@@ -22,6 +22,7 @@ const AddSpeciesForm = () => {
     status: "",
     surveysite: "",
   });
+
   const [image, setImage] = useState(null);
 
   const { mutate: addSpecies, isLoading } = useMutation({

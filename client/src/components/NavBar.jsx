@@ -144,7 +144,7 @@ const NavBar = () => {
                 </Link>
                 <Link
                   onClick={() => setIsMenuOpen(false)}
-                  to="/specie"
+                  to="/species"
                   className="hover:text-blue-500"
                 >
                   Species
