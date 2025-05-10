@@ -70,7 +70,7 @@ const App = () => {
           
           {/* Public */}
           <Route path="*" element={<NotFoundPage />} />
-          <Route path="/home" element={<HomePage />} />
+          <Route path="/" element={<HomePage />} />
 
           {/* Classification */}
           <Route

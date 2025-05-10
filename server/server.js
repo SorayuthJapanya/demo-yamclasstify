@@ -9,6 +9,7 @@ const { connectDB } = require("./config/connectDB");
 const authRoutes = require("./routes/authRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const speciesRoutes = require("./routes/speciesRoutes");
+const historyRoutes = require("./routes/historyRoutes");
 
 //Config
 dotenv.config();
@@ -33,6 +34,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1", uploadRoutes);
 app.use("/api/v1/species", speciesRoutes);
+app.use("/api/v1/history", historyRoutes);
 
 // Server React
 

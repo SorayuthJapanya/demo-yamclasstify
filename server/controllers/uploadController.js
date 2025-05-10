@@ -1,10 +1,13 @@
 const axios = require("axios");
+const Classification = require("../models/classificationModel");
 
 // Single file upload handler
 exports.uploadImages = async (req, res) => {
   try {
     const Currentimage = req.file;
-    console.log("Image File:", Currentimage);
+
+    if (!Currentimage)
+      return res.status(400).json({ message: "No file uploaded" });
 
     const {
       userId,
@@ -23,7 +26,7 @@ exports.uploadImages = async (req, res) => {
     // ถ้ายังไม่ได้ยิง ML API ก็ Mock ไปก่อน
     const mlResult = {
       prediction: "mock-prediction",
-      filename: Currentimage.originalname,
+      filename: Currentimage.filename,
       receivedData: {
         fruit,
         leafBaseColor,

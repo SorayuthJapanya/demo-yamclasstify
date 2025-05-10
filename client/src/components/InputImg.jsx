@@ -92,10 +92,6 @@ const InputImg = () => {
     addFilesToList(e.dataTransfer.files);
   };
 
-  useEffect(() => {
-    console.log("Current Img: ", images);
-  }, [images]);
-
   return (
     <div
       onDragOver={handleDragOver}

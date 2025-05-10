@@ -26,7 +26,7 @@ const LogInForm = () => {
       if (role === "ADMIN") {
         navigate("/admin");
       } else {
-        navigate("/home");
+        navigate("/");
       }
     },
     onError: (error) => {
